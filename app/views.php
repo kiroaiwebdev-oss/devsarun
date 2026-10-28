@@ -172,8 +172,10 @@ function page_end(): void
 </footer>
 
 <?php if ($wa): ?>
-<a href="https://wa.me/<?= e($wa) ?>?text=<?= rawurlencode('Hi Arun, I found you on your website and want to discuss a project.') ?>" target="_blank" rel="noopener" data-track="whatsapp_click" data-label="floating" class="fixed bottom-5 left-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/40 transition hover:scale-105" aria-label="Chat on WhatsApp"><?= icon('whatsapp', 'h-6 w-6') ?></a>
+<a href="https://wa.me/<?= e($wa) ?>?text=<?= rawurlencode('Hi Arun, I found you on your website and want to discuss a project.') ?>" target="_blank" rel="noopener" data-track="whatsapp_click" data-label="floating" class="wa-float fixed bottom-5 left-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/40 transition hover:scale-105" aria-label="Chat on WhatsApp"><?= icon('whatsapp', 'h-6 w-6') ?></a>
 <?php endif; ?>
+
+<?php enquiry_modal(); ?>
 
 <!-- AI assistant -->
 <div id="ai-chat" class="fixed bottom-5 right-5 z-50" data-greeting="<?= e(setting('ai_greeting')) ?>">
@@ -225,26 +227,110 @@ function section_head(string $kicker, string $title, string $sub = '', string $a
         . '</div>';
 }
 
+function service_packages(array $s): array
+{
+    return array_values(array_filter(json_list($s['packages'] ?? null), static fn($p) => is_array($p) && !empty($p['name'])));
+}
+
+/** Data attributes for an "Enquire" button. */
+function enquire_attrs(array $s, string $package = '', string $label = ''): string
+{
+    return 'data-enquire="' . e($s['slug']) . '" data-package="' . e($package) . '" data-track="enquire_open" data-label="' . e($label ?: $s['slug']) . '" data-service="' . (int)$s['id'] . '"';
+}
+
 function service_card(array $s): void
 {
     $features = json_list($s['features']);
+    $href = url('services/' . $s['slug'] . '/');
     ?>
-    <a href="<?= e(url('services/' . $s['slug'] . '/')) ?>" class="card group relative flex flex-col p-6 sm:p-7">
+    <article class="card card-hover group relative flex h-full flex-col p-6 sm:p-7">
       <?php if ((int)$s['is_featured']): ?><span class="absolute right-5 top-5 rounded-full bg-neo-green/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-neo-green">Popular</span><?php endif; ?>
-      <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-neo-green/10 text-neo-green transition group-hover:scale-105"><?= icon($s['icon'], 'h-6 w-6') ?></div>
-      <h3 class="mt-5 text-lg font-semibold tracking-tight"><?= e($s['title']) ?></h3>
+      <a href="<?= e($href) ?>" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-neo-green/10 text-neo-green transition group-hover:scale-105" aria-hidden="true" tabindex="-1"><?= icon($s['icon'], 'h-6 w-6') ?></a>
+      <h3 class="mt-5 text-lg font-semibold tracking-tight"><a href="<?= e($href) ?>" class="hover:text-neo-green"><?= e($s['title']) ?></a></h3>
       <p class="mt-2 text-sm leading-relaxed text-white/55"><?= e($s['summary']) ?></p>
       <ul class="mt-5 space-y-2 text-sm text-white/60">
         <?php foreach (array_slice($features, 0, 3) as $f): ?><li class="flex gap-2"><span class="mt-0.5 text-neo-green"><?= icon('check', 'h-4 w-4') ?></span><?= e($f) ?></li><?php endforeach; ?>
       </ul>
-      <div class="mt-auto flex items-end justify-between pt-6">
-        <div>
-          <p class="font-mono text-[10px] uppercase tracking-widest text-white/35"><?= $s['price_from'] ? 'Starting from' : 'Pricing' ?></p>
-          <p class="mt-1 text-lg font-bold text-neo-green"><?= e(price_text($s)) ?></p>
+      <div class="mt-auto pt-6">
+        <div class="flex items-end justify-between border-t border-white/[0.06] pt-5">
+          <div>
+            <p class="font-mono text-[10px] uppercase tracking-widest text-white/35"><?= $s['price_from'] ? 'Starting from' : 'Pricing' ?></p>
+            <p class="mt-1 text-lg font-bold text-neo-green"><?= e(price_text($s)) ?></p>
+          </div>
+          <span class="text-[11px] text-white/35">negotiable</span>
         </div>
-        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition group-hover:border-neo-green/40 group-hover:bg-neo-green group-hover:text-neo-black"><?= icon('arrow', 'h-4 w-4') ?></span>
+        <div class="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2">
+          <a href="<?= e($href) ?>" class="inline-flex items-center justify-center rounded-full border border-white/10 px-3 py-2.5 text-sm font-medium text-white/80 transition hover:border-white/25 hover:text-white">Details</a>
+          <button type="button" <?= enquire_attrs($s, '', 'card:' . $s['slug']) ?> class="inline-flex items-center justify-center rounded-full bg-neo-green px-3 py-2.5 text-sm font-semibold text-neo-black transition hover:bg-neo-green/90">Enquire</button>
+          <a href="<?= e(url('brochure/' . $s['slug'] . '/')) ?>" data-track="brochure_view" data-label="<?= e($s['slug']) ?>" class="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-white/10 text-white/60 transition hover:border-neo-green/40 hover:text-neo-green" title="Download brochure (PDF)" aria-label="<?= e($s['title']) ?> brochure"><?= icon('download', 'h-4 w-4') ?></a>
+        </div>
       </div>
-    </a>
+    </article>
+    <?php
+}
+
+/** Global enquiry modal (one per page, opened by any [data-enquire] button). */
+function enquiry_modal(): void
+{
+    $services = services_active();
+    $wa = preg_replace('/\D+/', '', setting('whatsapp'));
+    ?>
+<div id="enq-modal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-labelledby="enq-title">
+  <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" data-enq-close></div>
+  <div class="relative mx-auto flex min-h-full max-w-4xl items-end justify-center p-0 sm:items-center sm:p-6">
+    <div class="relative grid max-h-[100dvh] w-full overflow-y-auto rounded-t-[28px] border border-white/10 bg-[#0d0d0d] shadow-2xl sm:max-h-[92vh] sm:rounded-[28px] md:grid-cols-[.85fr_1.15fr]">
+      <aside class="hidden flex-col justify-between bg-gradient-to-br from-neo-green/[0.12] via-white/[0.02] to-transparent p-8 md:flex">
+        <div>
+          <p class="kicker">// enquiry</p>
+          <h2 class="mt-3 text-2xl font-bold tracking-tight">Let's discuss <span id="enq-svc-name" class="text-neo-green">your project</span></h2>
+          <p class="mt-3 text-sm leading-relaxed text-white/60">Share a few details. You'll get a reference ID instantly and a personal reply within 24 hours.</p>
+        </div>
+        <ol class="mt-8 space-y-4 text-sm">
+          <?php foreach ([['Free requirement call', 'We understand your goal & scope.'], ['Written, negotiable quote', 'Clear deliverables, timeline & price.'], ['Kick-off', 'Milestone payment via Razorpay & build.']] as $i => [$t, $d]): ?>
+            <li class="flex gap-3"><span class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-neo-green/15 font-mono text-xs text-neo-green"><?= $i + 1 ?></span><span><span class="block font-medium text-white"><?= e($t) ?></span><span class="text-white/50"><?= e($d) ?></span></span></li>
+          <?php endforeach; ?>
+        </ol>
+        <p class="mt-8 flex items-center gap-2 text-xs text-white/40"><?= icon('lock', 'h-3.5 w-3.5') ?> Your details stay private. No spam.</p>
+      </aside>
+      <div class="p-6 sm:p-8">
+        <div class="flex items-start justify-between gap-3">
+          <h2 id="enq-title" class="text-xl font-semibold md:hidden">Enquire now</h2>
+          <span class="hidden md:block"></span>
+          <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full text-white/60 hover:bg-white/5" data-enq-close aria-label="Close"><?= icon('x', 'h-5 w-5') ?></button>
+        </div>
+        <form id="enq-form" class="mt-2 grid gap-4 sm:grid-cols-2" novalidate>
+          <input type="hidden" name="source" value="enquiry">
+          <input type="text" name="website_hp" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="sm:col-span-2"><label class="label" for="enq-service">Service</label>
+            <select id="enq-service" class="field" name="service" required>
+              <?php foreach ($services as $s): ?><option value="<?= e($s['slug']) ?>" data-title="<?= e($s['title']) ?>" data-packages="<?= e(json_encode(array_map(static fn($p) => $p['name'] . ' — ' . $p['price'], service_packages($s)), JSON_UNESCAPED_UNICODE)) ?>"><?= e($s['title']) ?></option><?php endforeach; ?>
+            </select></div>
+          <div class="sm:col-span-2" id="enq-pkg-wrap"><label class="label" for="enq-package">Package of interest</label><select id="enq-package" class="field" name="package"></select></div>
+          <div><label class="label" for="enq-name">Full name</label><input id="enq-name" class="field" name="name" required maxlength="120" autocomplete="name"></div>
+          <div><label class="label" for="enq-email">Email</label><input id="enq-email" class="field" type="email" name="email" required maxlength="190" autocomplete="email"></div>
+          <div class="grid grid-cols-[minmax(0,.9fr)_minmax(0,1.6fr)] gap-3 sm:col-span-2">
+            <div><label class="label" for="enq-cc">Country</label><select id="enq-cc" class="field" name="country_code"><?php foreach (country_codes() as $c => $l): ?><option value="<?= e($c) ?>"><?= e($l) ?></option><?php endforeach; ?></select></div>
+            <div><label class="label" for="enq-phone">Phone / WhatsApp</label><input id="enq-phone" class="field" type="tel" name="phone" required maxlength="20" autocomplete="tel"></div>
+          </div>
+          <div class="sm:col-span-2"><label class="label" for="enq-msg">Message (optional)</label><textarea id="enq-msg" class="field min-h-[96px]" name="message" maxlength="3000" placeholder="Tell me a little about your business or requirement…"></textarea></div>
+          <p id="enq-error" class="hidden rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200 sm:col-span-2" role="alert"></p>
+          <div class="sm:col-span-2"><button type="submit" class="btn-primary w-full">Send enquiry <?= icon('send', 'h-4 w-4') ?></button><p class="mt-3 text-center text-xs text-white/40">Every price is negotiable · reply within 24 hours</p></div>
+        </form>
+        <div id="enq-done" class="hidden py-8 text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-neo-green/15 text-neo-green"><?= icon('check', 'h-7 w-7') ?></div>
+          <h3 class="mt-5 text-xl font-semibold">Enquiry received</h3>
+          <p class="mt-2 text-sm text-white/60">Reference ID</p>
+          <p id="enq-ref" class="mt-1 font-mono text-2xl font-bold tracking-wider text-neo-green"></p>
+          <p class="mx-auto mt-3 max-w-sm text-sm text-white/55">A confirmation email is on its way. I'll reply personally within 24 hours.</p>
+          <div class="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+            <a id="enq-track" href="<?= e(url('track/')) ?>" class="btn-ghost btn-sm">Track request</a>
+            <?php if ($wa): ?><a id="enq-wa" data-wa="<?= e($wa) ?>" href="https://wa.me/<?= e($wa) ?>" target="_blank" rel="noopener" class="btn-primary btn-sm" data-track="whatsapp_click" data-label="enquiry_done"><?= icon('whatsapp', 'h-4 w-4') ?> Continue on WhatsApp</a><?php endif; ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
     <?php
 }
 

@@ -102,8 +102,8 @@ if (is_post()) {
         }
     } elseif ($action === 'test_razorpay') {
         try {
-            razorpay_request('GET', 'orders?count=1');
-            flash('success', 'Razorpay credentials are valid ✅');
+            razorpay_test_credentials();
+            flash('success', 'Razorpay credentials are valid ✅ (' . razorpay_mode() . ' mode)');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
         }
@@ -161,11 +161,13 @@ admin_start('Settings', 'settings');
       <?php $field('response_time', 'Response time'); $field('availability', 'Availability status'); ?>
       <?php $field('github_url', 'GitHub URL', 'url'); $field('instagram_url', 'Instagram URL', 'url'); $field('twitter_url', 'X / Twitter URL', 'url'); $field('threads_url', 'Threads URL', 'url'); ?>
     <?php elseif ($tab === 'email'): ?>
+      <p class="sm:col-span-2 text-sm text-white/60">Mail engine: <strong class="text-neo-green"><?= e(mail_engine()) ?></strong></p>
       <div class="sm:col-span-2 rounded-2xl bg-white/[0.03] p-4 text-xs leading-relaxed text-white/50">Gmail: host <code>smtp.gmail.com</code>, port <code>587</code>, TLS, your Gmail + an <strong>App Password</strong>. Hostinger: <code>smtp.hostinger.com</code>, port <code>465</code>, SSL. The password is stored encrypted (AES-256-GCM).</div>
       <?php $field('smtp_host', 'SMTP host', 'text', '', 'smtp.gmail.com'); ?>
       <div class="grid grid-cols-2 gap-3"><?php $field('smtp_port', 'Port', 'number'); ?><div><label class="a-label">Encryption</label><select class="a-input" name="smtp_encryption"><?php foreach (['tls' => 'STARTTLS (587)', 'ssl' => 'SSL (465)', 'none' => 'None'] as $k => $l): ?><option value="<?= $k ?>" <?= setting('smtp_encryption', 'tls') === $k ? 'selected' : '' ?>><?= $l ?></option><?php endforeach; ?></select></div></div>
       <?php $field('smtp_user', 'SMTP username'); $field('smtp_pass', 'SMTP password'); $field('mail_from', 'From email', 'email', 'Usually the same as the SMTP username.'); $field('mail_from_name', 'From name'); ?>
     <?php elseif ($tab === 'payments'): ?>
+      <p class="sm:col-span-2 text-sm text-white/60">Payment engine: <strong class="text-neo-green"><?= e(razorpay_engine()) ?></strong> · Mode: <strong class="<?= razorpay_mode() === 'live' ? 'text-neo-green' : 'text-amber-200' ?>"><?= e(razorpay_mode()) ?></strong></p>
       <label class="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" name="razorpay_enabled" value="1" <?= setting('razorpay_enabled') === '1' ? 'checked' : '' ?> class="accent-[#4ADE80]"> Enable online payments</label>
       <?php $field('razorpay_key_id', 'Key ID', 'text', 'rzp_test_… for testing, rzp_live_… for production'); $field('razorpay_key_secret', 'Key secret'); ?>
       <div class="sm:col-span-2"><?php $field('razorpay_webhook_secret', 'Webhook secret', 'text', 'Razorpay Dashboard → Settings → Webhooks. Events: <code>payment.captured</code>, <code>order.paid</code>, <code>payment.failed</code>.'); ?></div>

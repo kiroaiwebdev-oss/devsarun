@@ -14,7 +14,7 @@ ServerSignature Off
   # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
   # --- Block private folders & files ---
-  RewriteRule ^(app|database|storage|node_modules|\.git|\.kiro)(/|$) - [F,L]
+  RewriteRule ^(app|database|storage|vendor|node_modules|\.git|\.kiro)(/|$) - [F,L]
   RewriteRule ^(package(-lock)?\.json|tailwind\.config\.js|dev-router\.php|README\.md|composer\.(json|lock))$ - [F,L]
   RewriteRule (^|/)\. - [F,L]
 

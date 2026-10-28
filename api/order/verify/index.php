@@ -26,7 +26,7 @@ if (!razorpay_verify_payment($rzpOrder, $rzpPayment, $signature)) {
 // Fetch method (best effort) for the record.
 $method = '';
 try {
-    $p = razorpay_request('GET', 'payments/' . rawurlencode($rzpPayment));
+    $p = razorpay_fetch_payment($rzpPayment);
     $method = (string)($p['method'] ?? '');
 } catch (Throwable) {
 }

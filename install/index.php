@@ -86,6 +86,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $pdo->prepare('INSERT INTO admin_users (name,email,password_hash,role,is_active,created_at) VALUES (?,?,?,"owner",1,?)')->execute([$adminName, $adminEmail, password_hash($adminPass, PASSWORD_DEFAULT), $now]);
             }
             $pdo->commit();
+            require $root . '/app/upgrade.php';
+            run_upgrades($pdo);
 
             $config = [
                 'base_url' => $baseUrl,

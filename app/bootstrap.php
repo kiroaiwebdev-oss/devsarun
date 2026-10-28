@@ -13,6 +13,11 @@ define('STORAGE', ROOT . '/storage');
 $configFile = APP . '/config.php';
 $GLOBALS['CONFIG'] = is_file($configFile) ? require $configFile : [];
 
+// Bundled vendor libraries (PHPMailer, Razorpay SDK). Shipped in /vendor so no Composer is needed on the server.
+if (is_file(ROOT . '/vendor/autoload.php')) {
+    require ROOT . '/vendor/autoload.php';
+}
+
 require APP . '/helpers.php';
 require APP . '/db.php';
 
@@ -93,6 +98,17 @@ if (session_status() === PHP_SESSION_NONE && PHP_SAPI !== 'cli') {
     ini_set('session.use_only_cookies', '1');
     ini_set('session.gc_maxlifetime', '7200');
     session_start();
+}
+
+// Automatic, idempotent upgrades for existing installs.
+require APP . '/upgrade.php';
+if (is_file($configFile) && (int)setting('schema_version', '1') < SCHEMA_VERSION) {
+    try {
+        run_upgrades(db());
+        settings_all(true);
+    } catch (Throwable $e) {
+        error_log('Upgrade failed: ' . $e->getMessage());
+    }
 }
 
 require APP . '/auth.php';

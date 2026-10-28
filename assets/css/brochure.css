@@ -142,3 +142,19 @@ body.exporting .slide { width: 1280px; height: 720px; border-radius: 0; box-shad
   .deck { width: 1280px; max-width: none; gap: 0; display: block; }
   .slide { width: 1280px; height: 720px; border-radius: 0; box-shadow: none; page-break-after: always; break-after: page; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* v2: overview + packages slides */
+.lead.small { font-size: 1.45cqw; margin-top: 1.6cqw; }
+.pk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.2cqw; max-width: 86%; }
+.pk-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 1.8cqw; padding: 2.2cqw 2.2cqw 2.6cqw; }
+.pk-hl { border: .25cqw solid #22c55e; box-shadow: 0 1.5cqw 3cqw -1.5cqw rgba(34,197,94,.45); }
+.pk-name { font-size: 1.3cqw !important; font-weight: 800; letter-spacing: .08em; color: #555 !important; }
+.pk-price { font-size: 3cqw !important; font-weight: 900; letter-spacing: -.02em; color: #262626 !important; margin-top: .6cqw; line-height: 1.1 !important; }
+.pk-note { font-size: 1.15cqw !important; color: #777 !important; margin-top: .4cqw; }
+.pk-card ul { list-style: none; margin-top: 1.4cqw; }
+.pk-card li { font-size: 1.2cqw; line-height: 1.35; color: #333; padding: .45cqw 0 .45cqw 1.8cqw; position: relative; }
+.pk-card li::before, .tick::before { content: ''; position: absolute; left: .2cqw; top: .75cqw; width: .55cqw; height: 1cqw; border: solid #16a34a; border-width: 0 .22cqw .22cqw 0; transform: rotate(45deg); }
+.pk-foot { margin-top: 2cqw; font-size: 1.2cqw !important; color: #666 !important; }
+
+.tick { position: relative; padding-left: 3.4cqw !important; }
+.tick::before { left: 1.6cqw; top: 1.55cqw; }

@@ -19,7 +19,7 @@ if (rate_limited('lead', 6, 600)) {
 }
 
 $source = input('source', 20, 'brief');
-if (!in_array($source, ['brief', 'contact', 'audit'], true)) {
+if (!in_array($source, ['brief', 'contact', 'audit', 'enquiry'], true)) {
     $source = 'brief';
 }
 
@@ -45,6 +45,8 @@ if ($source === 'brief') {
     if (input('consent') !== '1') $errors[] = 'Please accept to be contacted about this project.';
 } elseif ($source === 'contact') {
     if (mb_strlen($desc) < 10) $errors[] = 'Message must be at least 10 characters.';
+} elseif ($source === 'enquiry') {
+    if ($phone === '') $errors[] = 'Please enter your phone / WhatsApp number.';
 } else { // audit
     if ($website === '') $errors[] = 'Please enter your website URL.';
 }
@@ -89,6 +91,12 @@ if (!empty($_FILES['attachment']) && ($_FILES['attachment']['error'] ?? UPLOAD_E
     }
     $attachPath = 'briefs/' . $stored;
     $attachName = mb_substr(preg_replace('/[^\w.\- ]+/u', '_', (string)$f['name']) ?? 'file', 0, 190);
+}
+
+$package = single_line(input('package', 80));
+if ($source === 'enquiry') {
+    $title = $title ?: trim('Enquiry: ' . ($service['title'] ?? 'General') . ($package ? ' — ' . $package : ''));
+    $desc = trim(($package ? "Interested package: {$package}\n\n" : '') . ($desc ?: 'Requested a call back / details.'));
 }
 
 $startDate = input('start_date', 10);
@@ -141,14 +149,14 @@ for ($try = 0; $try < 5; $try++) {
         }
     }
 }
-$labels = ['brief' => 'Project brief submitted', 'contact' => 'Contact form message', 'audit' => 'Free AEO/GEO visibility check requested'];
+$labels = ['brief' => 'Project brief submitted', 'contact' => 'Contact form message', 'audit' => 'Free AEO/GEO visibility check requested', 'enquiry' => 'Service enquiry' . ($service ? ' — ' . $service['title'] : '') . ($package ? ' (' . $package . ')' : '')];
 lead_activity($leadId, 'created', $labels[$source], true);
-track_event(['brief' => 'form_submit', 'contact' => 'contact_submit', 'audit' => 'audit_request'][$source], $ref, $service ? (int)$service['id'] : null);
+track_event(['brief' => 'form_submit', 'contact' => 'contact_submit', 'audit' => 'audit_request', 'enquiry' => 'enquiry_submit'][$source], $ref, $service ? (int)$service['id'] : null);
 
 // Emails (failures are logged, never block the user).
 $trackUrl = abs_url('track/?ref=' . $ref . '&email=' . rawurlencode($email));
 $svcLabel = $service['title'] ?? 'your project';
-$clientBody = '<p>Hi ' . e($name) . ',</p><p>Thanks for reaching out! I have received your ' . e($source === 'audit' ? 'AEO/GEO visibility check request' : ($source === 'contact' ? 'message' : 'project brief for ' . $svcLabel)) . '.</p>'
+$clientBody = '<p>Hi ' . e($name) . ',</p><p>Thanks for reaching out! I have received your ' . e($source === 'audit' ? 'AEO/GEO visibility check request' : ($source === 'contact' ? 'message' : ($source === 'enquiry' ? 'enquiry about ' . $svcLabel . ($package ? ' (' . $package . ')' : '') : 'project brief for ' . $svcLabel))) . '.</p>'
     . '<p>Your reference ID is <strong style="font-family:monospace;font-size:16px">' . e($ref) . '</strong>.</p>'
     . '<p>I will get back to you within 24 hours. And remember — every price is negotiable, so feel free to share your budget.</p>';
 send_mail($email, "We received your request — {$ref}", email_layout('Request received ✅', $clientBody, 'Track your request', $trackUrl), ['kind' => 'lead_ack', 'lead_id' => $leadId]);
@@ -156,7 +164,7 @@ send_mail($email, "We received your request — {$ref}", email_layout('Request r
 $notify = setting('notify_email', setting('contact_email'));
 if ($notify && valid_email($notify)) {
     $rows = '';
-    foreach (['Source' => $source, 'Service' => $svcLabel, 'Project' => $title, 'Budget' => $data['budget'], 'Timeline' => $data['timeline'], 'Name' => $name, 'Email' => $email, 'Phone' => trim(($cc ?: '') . ' ' . $phone), 'Company' => $data['company'], 'Website' => $website, 'Preferred' => $data['preferred_contact']] as $k => $v) {
+    foreach (['Source' => $source, 'Service' => $svcLabel, 'Package' => $package, 'Project' => $title, 'Budget' => $data['budget'], 'Timeline' => $data['timeline'], 'Name' => $name, 'Email' => $email, 'Phone' => trim(($cc ?: '') . ' ' . $phone), 'Company' => $data['company'], 'Website' => $website, 'Preferred' => $data['preferred_contact']] as $k => $v) {
         if ($v) {
             $rows .= '<tr><td style="padding:4px 12px 4px 0;color:#888">' . e($k) . '</td><td style="padding:4px 0"><strong>' . e((string)$v) . '</strong></td></tr>';
         }

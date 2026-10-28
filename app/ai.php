@@ -12,8 +12,9 @@ function ai_knowledge(): string
 {
     $lines = [];
     foreach (services_active() as $s) {
-        $lines[] = sprintf('- %s (%s): %s | Price: %s (negotiable) | Timeline: %s | Details page: /services/%s/',
-            $s['title'], $s['category'], $s['summary'], price_text($s), $s['timeline'] ?: 'shared with quote', $s['slug']);
+        $pk = implode('; ', array_map(static fn($p) => $p['name'] . ' ' . $p['price'], service_packages($s)));
+        $lines[] = sprintf('- %s (%s): %s | Price: %s (negotiable) | Packages: %s | Timeline: %s | Details page: /services/%s/ | Brochure: /brochure/%s/',
+            $s['title'], $s['category'], $s['summary'], price_text($s), $pk ?: 'custom', $s['timeline'] ?: 'shared with quote', $s['slug'], $s['slug']);
     }
     $site = setting('site_name', 'Devs Arun');
     $owner = setting('owner_name', 'Arun');
@@ -24,7 +25,7 @@ function ai_knowledge(): string
         . "1. EVERY price is a starting point and is NEGOTIABLE. Nothing is fixed. Always mention this when talking about money. Never refuse due to budget — suggest a smaller scope instead.\n"
         . "2. Never invent services, guarantees, client names or numbers that are not listed below. AEO/GEO has no guaranteed rankings, AI mentions or leads.\n"
         . "3. Keep replies short (2–5 sentences or a tight bullet list), warm and professional. Reply in the visitor's language (English, Hindi or Hinglish).\n"
-        . "4. You may use **bold** and markdown links like [Start a project](/start-project/). Only link to pages on this site listed here: /services/, /services/<slug>/, /work/, /pricing/, /aeo-geo/, /start-project/, /contact/, /track/.\n"
+        . "4. You may use **bold** and markdown links like [Start a project](/start-project/). Only link to pages on this site listed here: /services/, /services/<slug>/, /services/<slug>/#enquire, /brochure/<slug>/, /work/, /pricing/, /aeo-geo/, /start-project/, /contact/, /track/.\n"
         . "5. Payment: milestone based (advance + rest on delivery). Some services can be booked online via Razorpay on their service page; negotiated quotes get a secure payment link.\n"
         . "Contact: email " . setting('contact_email', 'itsdevsarun@gmail.com') . (setting('whatsapp') !== '' ? ', WhatsApp ' . setting('whatsapp') : '') . ". Response time: within 24 hours.\n\n"
         . "SERVICES:\n" . implode("\n", $lines)
@@ -160,10 +161,13 @@ function ai_rules_reply(string $msg): string
     if ($best) {
         $price = $best['price_usd'] ? $best['price_usd'] . ' (≈ ' . price_text($best) . ')' : price_text($best);
         $out = "**{$best['title']}** — {$best['summary']}\n\n💰 " . $price . " · **negotiable**";
+        if ($pk = service_packages($best)) {
+            $out .= "\n📦 Packages: " . implode(' · ', array_map(static fn($p) => $p['name'] . ' ' . $p['price'], $pk));
+        }
         if ($best['timeline']) {
             $out .= "\n⏱️ Typical timeline: {$best['timeline']}";
         }
-        $out .= "\n\n[See full details & brochure](/services/{$best['slug']}/) or [start a project brief](/start-project/?service={$best['slug']}).";
+        $out .= "\n\n[See full details](/services/{$best['slug']}/) · [Download brochure](/brochure/{$best['slug']}/) · [Enquire now](/services/{$best['slug']}/#enquire)";
         return $out;
     }
     if ($has(['negotiab', 'discount', 'kam', 'less', 'cheap', 'sasta', 'mol', 'bargain'])) {

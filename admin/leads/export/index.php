@@ -12,9 +12,9 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="leads-' . date('Y-m-d') . '.csv"');
 $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF"); // Excel UTF-8 BOM
-fputcsv($out, $rows ? array_keys($rows[0]) : ['ref']);
+fputcsv($out, $rows ? array_keys($rows[0]) : ['ref'], ',', '"', '');
 foreach ($rows as $r) {
     // Neutralise spreadsheet formula injection.
-    fputcsv($out, array_map(static fn($v) => is_string($v) && preg_match('/^[=+\-@\t\r]/', $v) ? "'" . $v : $v, $r));
+    fputcsv($out, array_map(static fn($v) => is_string($v) && preg_match('/^[=+\-@\t\r]/', $v) ? "'" . $v : $v, $r), ',', '"', '');
 }
 fclose($out);

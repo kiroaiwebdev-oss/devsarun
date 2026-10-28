@@ -148,7 +148,9 @@ function send_mail(string $to, string $subject, string $html, array $opts = []):
     $ok = false;
     $err = '';
     try {
-        if (smtp_configured()) {
+        if (smtp_configured() && class_exists(\PHPMailer\PHPMailer\PHPMailer::class)) {
+            [$ok, $err] = send_via_phpmailer($from, $fromName, $to, $cc, $subject, $html, $text, $opts);
+        } elseif (smtp_configured()) {
             $m = new SmtpMailer(setting('smtp_host'), (int)setting('smtp_port', '587'), setting('smtp_encryption', 'tls'), setting('smtp_user'), setting('smtp_pass'));
             $m->send($from, $fromName, array_merge([$to], $cc), $subject, $body, implode("\r\n", $headers) . "\r\n");
             $ok = true;
@@ -180,6 +182,67 @@ function send_mail(string $to, string $subject, string $html, array $opts = []):
         error_log('email_log insert failed: ' . $e->getMessage());
     }
     return [$ok, $err];
+}
+
+/** Which mail engine is active (shown in admin). */
+function mail_engine(): string
+{
+    if (!smtp_configured()) {
+        return 'PHP mail() fallback';
+    }
+    return class_exists(\PHPMailer\PHPMailer\PHPMailer::class) ? 'PHPMailer ' . \PHPMailer\PHPMailer\PHPMailer::VERSION . ' (SMTP)' : 'Built-in SMTP client';
+}
+
+/**
+ * Send with PHPMailer (vendor). Handles SSL/STARTTLS, AUTH PLAIN/LOGIN/CRAM-MD5, UTF-8 and proper MIME.
+ * $opts: reply_to, attachments => [[path, name]]
+ */
+function send_via_phpmailer(string $from, string $fromName, string $to, array $cc, string $subject, string $html, string $text, array $opts): array
+{
+    $m = new \PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $m->isSMTP();
+        $m->Host = setting('smtp_host');
+        $m->Port = (int)setting('smtp_port', '587');
+        $enc = setting('smtp_encryption', 'tls');
+        if ($enc === 'ssl') {
+            $m->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($enc === 'tls') {
+            $m->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $m->SMTPSecure = '';
+            $m->SMTPAutoTLS = false;
+        }
+        $user = setting('smtp_user');
+        $m->SMTPAuth = $user !== '';
+        $m->Username = $user;
+        $m->Password = setting('smtp_pass');
+        $m->Timeout = 20;
+        $m->CharSet = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
+        $m->Encoding = 'base64';
+        $m->XMailer = 'DevsArun-CRM';
+        $m->setFrom($from, $fromName);
+        $m->addAddress($to);
+        foreach ($cc as $c) {
+            $m->addCC($c);
+        }
+        if (!empty($opts['reply_to']) && valid_email((string)$opts['reply_to'])) {
+            $m->addReplyTo((string)$opts['reply_to']);
+        }
+        foreach ((array)($opts['attachments'] ?? []) as [$path, $name]) {
+            if (is_file($path)) {
+                $m->addAttachment($path, $name);
+            }
+        }
+        $m->isHTML(true);
+        $m->Subject = $subject;
+        $m->Body = $html;
+        $m->AltBody = $text;
+        $m->send();
+        return [true, ''];
+    } catch (\Throwable $e) {
+        return [false, $m->ErrorInfo ?: $e->getMessage()];
+    }
 }
 
 /** Branded email layout. $bodyHtml must already be escaped/safe. */

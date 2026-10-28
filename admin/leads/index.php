@@ -25,7 +25,7 @@ admin_start('Leads & CRM', 'leads');
 <form method="get" class="a-card mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
   <?php if (!empty($_GET['status'])): ?><input type="hidden" name="status" value="<?= e((string)$_GET['status']) ?>"><?php endif; ?>
   <input class="a-input lg:col-span-2" type="search" name="q" value="<?= e((string)($_GET['q'] ?? '')) ?>" placeholder="Name, email, phone, ref, company…">
-  <select class="a-input" name="source"><option value="">All sources</option><?php foreach (['brief', 'contact', 'chat', 'audit', 'checkout'] as $s): ?><option value="<?= e($s) ?>" <?= ($_GET['source'] ?? '') === $s ? 'selected' : '' ?>><?= e(ucfirst($s)) ?></option><?php endforeach; ?></select>
+  <select class="a-input" name="source"><option value="">All sources</option><?php foreach (['brief', 'enquiry', 'contact', 'chat', 'audit', 'checkout'] as $s): ?><option value="<?= e($s) ?>" <?= ($_GET['source'] ?? '') === $s ? 'selected' : '' ?>><?= e(ucfirst($s)) ?></option><?php endforeach; ?></select>
   <select class="a-input" name="service"><option value="">All services</option><?php foreach (db_all('SELECT id, title FROM services ORDER BY sort_order') as $s): ?><option value="<?= (int)$s['id'] ?>" <?= (int)($_GET['service'] ?? 0) === (int)$s['id'] ? 'selected' : '' ?>><?= e($s['title']) ?></option><?php endforeach; ?></select>
   <input class="a-input [color-scheme:dark]" type="date" name="from" value="<?= e((string)($_GET['from'] ?? '')) ?>" title="From">
   <div class="flex gap-2"><input class="a-input [color-scheme:dark]" type="date" name="to" value="<?= e((string)($_GET['to'] ?? '')) ?>" title="To"><button class="a-btn" type="submit">Filter</button></div>

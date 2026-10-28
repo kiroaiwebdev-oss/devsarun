@@ -30,7 +30,7 @@ page_start(['title' => 'Pricing', 'description' => 'Transparent, negotiable pric
           <?php foreach ($features as $f): ?><li class="flex gap-2"><span class="mt-0.5 text-neo-green"><?= icon('check', 'h-4 w-4') ?></span><?= e($f) ?></li><?php endforeach; ?>
         </ul>
         <div class="mt-7 grid grid-cols-2 gap-2">
-          <a href="<?= e(url('start-project/?service=' . $s['slug'])) ?>" class="<?= $s['slug'] === 'business-website' ? 'btn-primary' : 'btn-ghost' ?> btn-sm col-span-2" data-track="cta_click" data-label="pricing:<?= e($s['slug']) ?>">Get a quote</a>
+          <button type="button" class="<?= $s['slug'] === 'business-website' ? 'btn-primary' : 'btn-ghost' ?> btn-sm col-span-2" <?= enquire_attrs($s, '', 'pricing:' . $s['slug']) ?>>Enquire now</button>
           <a href="<?= e(url('services/' . $s['slug'] . '/')) ?>" class="rounded-full py-2 text-center text-xs text-white/50 hover:text-white">Details</a>
           <a href="<?= e(url('brochure/' . $s['slug'] . '/')) ?>" class="rounded-full py-2 text-center text-xs text-white/50 hover:text-white">Brochure PDF</a>
         </div>

@@ -23,6 +23,10 @@ $faqs = array_slice(json_list($s['faqs']), 0, 4);
 $ideal = array_slice(json_list($s['ideal_for']), 0, 4);
 $notIncluded = json_list($s['not_included']);
 $features = json_list($s['features']);
+$benefits = array_slice(json_list($s['benefits'] ?? null), 0, 6);
+$packages = array_slice(service_packages($s), 0, 3);
+$overview = array_values(array_filter(array_map('trim', preg_split('/\n\s*\n/', (string)($s['overview'] ?: $s['description'] ?: $s['summary'])) ?: [])));
+$short = strtoupper(preg_replace('/\s*[\/(].*$/', '', $s['title']));
 $isAeo = $s['slug'] === 'aeo-geo-starter';
 $price = $s['price_usd'] && $isAeo ? '$199' : price_text($s);
 $priceSub = $isAeo ? 'AEO + GEO STARTER  /  ONE-TIME USD  ·  ≈ ' . price_text($s) : strtoupper($s['title']) . '  /  ' . ($s['price_from'] ? 'STARTING PRICE' : 'PRICING') . '  /  NEGOTIABLE';
@@ -46,9 +50,10 @@ $deco = static fn(string $v) => '<div class="deco deco-' . $v . '" aria-hidden="
 </head>
 <body data-base="<?= e(BASE_PATH) ?>" data-slug="<?= e($s['slug']) ?>" data-sid="<?= (int)$s['id'] ?>">
 <div class="toolbar">
-  <a href="<?= e(url('services/' . $s['slug'] . '/')) ?>" class="tb-btn">← Back to service</a>
+  <a href="<?= e(url('services/' . $s['slug'] . '/')) ?>" class="tb-btn">Back to service</a>
   <span class="tb-title"><?= e($s['title']) ?> · brochure</span>
   <div class="tb-actions">
+    <a href="<?= e(url('services/' . $s['slug'] . '/#enquire')) ?>" class="tb-btn">Enquire</a>
     <button type="button" class="tb-btn" id="print-btn">Print</button>
     <button type="button" class="tb-btn tb-primary" id="pdf-btn">Download PDF</button>
   </div>
@@ -148,19 +153,31 @@ $deco = static fn(string $v) => '<div class="deco deco-' . $v . '" aria-hidden="
     </div>
   </section>
 <?php else: ?>
-  <!-- WHY -->
+  <!-- WHAT IS -->
   <section class="slide">
     <?= $deco('b') ?>
     <div class="pad split">
       <div>
-        <h2 class="big">WHY IT<br>MATTERS</h2>
-        <p class="lead"><?= nl2br(e($s['description'] ?: $s['summary'])) ?></p>
+        <h2 class="big">WHAT IS<br><?= e($short) ?>?</h2>
+        <?php foreach (array_slice($overview, 0, 2) as $para): ?><p class="lead small"><?= e($para) ?></p><?php endforeach; ?>
       </div>
       <div class="arch arch-list">
-        <?php foreach (array_slice($features, 0, 4) as $f): ?><div class="tick">✓ <?= e($f) ?></div><?php endforeach; ?>
+        <?php foreach (array_slice($features, 0, 4) as $f): ?><div class="tick"><?= e($f) ?></div><?php endforeach; ?>
       </div>
     </div>
   </section>
+
+  <?php if ($benefits): ?>
+  <section class="slide">
+    <?= $deco('f') ?>
+    <div class="pad">
+      <h2 class="h">HOW IT HELPS YOUR BUSINESS.</h2>
+      <div class="cols3 mt">
+        <?php foreach ($benefits as $b): ?><div><h3><?= e(strtoupper($b['title'] ?? '')) ?></h3><p><?= e($b['desc'] ?? '') ?></p></div><?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <?php if ($ideal): ?>
   <section class="slide">
@@ -189,6 +206,26 @@ $deco = static fn(string $v) => '<div class="deco deco-' . $v . '" aria-hidden="
   <section class="slide">
     <?= $deco('g') ?>
     <div class="pad center"><p class="price">$199</p><p class="price-sub"><?= e($priceSub) ?></p></div>
+  </section>
+  <?php endif; ?>
+
+  <?php if (count($packages) > 1): ?>
+  <section class="slide">
+    <?= $deco('i') ?>
+    <div class="pad">
+      <h2 class="h">PACKAGES. CHOOSE A STARTING POINT.</h2>
+      <div class="pk mt">
+        <?php foreach ($packages as $i => $p): ?>
+          <div class="pk-card<?= $i === 1 ? ' pk-hl' : '' ?>">
+            <p class="pk-name"><?= e(strtoupper($p['name'])) ?></p>
+            <p class="pk-price"><?= e($p['price'] ?? '') ?></p>
+            <p class="pk-note"><?= e($p['note'] ?? '') ?></p>
+            <ul><?php foreach (array_slice((array)($p['features'] ?? []), 0, 5) as $f): ?><li><?= e($f) ?></li><?php endforeach; ?></ul>
+          </div>
+        <?php endforeach; ?>
+      </div>
+      <p class="pk-foot">All prices are starting points and negotiable.</p>
+    </div>
   </section>
   <?php endif; ?>
 

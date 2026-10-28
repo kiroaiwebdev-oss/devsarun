@@ -20,7 +20,7 @@ function lead_filters(): array
         $where[] = "status NOT IN ('won','lost','spam')";
     }
     $source = (string)($_GET['source'] ?? '');
-    if (in_array($source, ['brief', 'contact', 'chat', 'audit', 'checkout'], true)) {
+    if (in_array($source, ['brief', 'contact', 'chat', 'audit', 'checkout', 'enquiry'], true)) {
         $where[] = 'source = ?';
         $p[] = $source;
     }

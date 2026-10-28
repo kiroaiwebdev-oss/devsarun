@@ -37,6 +37,10 @@ if (is_post()) {
         'process' => json_encode(lines_to_list($in('process', 8000), ['stage', 'work', 'input', 'receive']), JSON_UNESCAPED_UNICODE),
         'faqs' => json_encode(lines_to_list($in('faqs', 12000), ['q', 'a']), JSON_UNESCAPED_UNICODE),
         'keywords' => $in('keywords', 400) ?: null,
+        'overview' => $in('overview', 12000) ?: null,
+        'benefits' => json_encode(lines_to_list($in('benefits', 8000), ['title', 'desc']), JSON_UNESCAPED_UNICODE),
+        'packages' => json_encode(array_map(static fn($r) => ['name' => $r['name'], 'price' => $r['price'], 'note' => $r['note'], 'features' => array_values(array_filter(array_map('trim', explode(';', $r['features']))))], lines_to_list($in('packages', 8000), ['name', 'price', 'note', 'features'])), JSON_UNESCAPED_UNICODE),
+        'tech_stack' => json_encode(array_values(array_filter(array_map('trim', explode(',', $in('tech_stack', 600))))), JSON_UNESCAPED_UNICODE),
         'is_buyable' => !empty($_POST['is_buyable']) ? 1 : 0,
         'buy_price' => $int('buy_price'),
         'buy_label' => single_line($in('buy_label', 80)) ?: null,
@@ -76,6 +80,13 @@ admin_start($s ? 'Edit: ' . $s['title'] : 'New service', 'services');
       <div class="sm:col-span-2"><label class="a-label">Tagline</label><input class="a-input" name="tagline" value="<?= $v('tagline') ?>"></div>
       <div class="sm:col-span-2"><label class="a-label">Summary (cards, SEO, AI)</label><textarea class="a-input" name="summary" rows="2"><?= $v('summary') ?></textarea></div>
       <div class="sm:col-span-2"><label class="a-label">Description (service page & brochure)</label><textarea class="a-input min-h-[120px]" name="description"><?= $v('description') ?></textarea></div>
+    </div>
+    <div class="a-card grid gap-4">
+      <h3 class="font-semibold">Detailed explanation</h3>
+      <div><label class="a-label">“What is this service?” — overview (blank line between paragraphs)</label><textarea class="a-input min-h-[200px]" name="overview"><?= $v('overview') ?></textarea></div>
+      <div><label class="a-label">How it helps the business — <code>Title | Description</code> per line (6 recommended)</label><textarea class="a-input min-h-[140px] font-mono text-xs" name="benefits"><?= e(list_to_lines($s['benefits'] ?? null, ['title', 'desc'])) ?></textarea></div>
+      <div><label class="a-label">Packages — <code>Name | Price | Short note | feature 1; feature 2; feature 3</code> (2nd line is highlighted)</label><textarea class="a-input min-h-[120px] font-mono text-xs" name="packages"><?= e(implode("\n", array_map(static fn($p) => implode(' | ', [$p['name'] ?? '', $p['price'] ?? '', $p['note'] ?? '', implode('; ', (array)($p['features'] ?? []))]), json_list($s['packages'] ?? null)))) ?></textarea></div>
+      <div><label class="a-label">Technology (comma separated)</label><input class="a-input" name="tech_stack" value="<?= e(implode(', ', json_list($s['tech_stack'] ?? null))) ?>"></div>
     </div>
     <div class="a-card grid gap-4 sm:grid-cols-2">
       <div><label class="a-label">Key features — one per line</label><textarea class="a-input min-h-[120px]" name="features"><?= e(list_to_lines($s['features'] ?? null)) ?></textarea></div>

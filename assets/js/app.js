@@ -112,6 +112,91 @@
     });
   });
 
+  /* ---------------- Enquiry modal ---------------- */
+  var enq = document.getElementById('enq-modal');
+  if (enq) {
+    var enqForm = document.getElementById('enq-form');
+    var enqSvc = document.getElementById('enq-service');
+    var enqPkg = document.getElementById('enq-package');
+    var enqPkgWrap = document.getElementById('enq-pkg-wrap');
+    var enqErr = document.getElementById('enq-error');
+    var enqDone = document.getElementById('enq-done');
+    var lastFocus = null;
+
+    var fillPackages = function (preferred) {
+      var opt = enqSvc.options[enqSvc.selectedIndex];
+      var list = [];
+      try { list = JSON.parse(opt.getAttribute('data-packages') || '[]'); } catch (e) { list = []; }
+      enqPkg.innerHTML = '';
+      if (!list.length) { enqPkgWrap.classList.add('hidden'); return; }
+      enqPkgWrap.classList.remove('hidden');
+      var none = document.createElement('option');
+      none.value = ''; none.textContent = 'Not sure yet — suggest me';
+      enqPkg.appendChild(none);
+      list.forEach(function (p) {
+        var o = document.createElement('option');
+        o.value = p; o.textContent = p;
+        if (preferred && p.indexOf(preferred) === 0) o.selected = true;
+        enqPkg.appendChild(o);
+      });
+      var name = document.getElementById('enq-svc-name');
+      if (name) name.textContent = opt.getAttribute('data-title');
+    };
+    var openEnq = function (slug, pkg) {
+      lastFocus = document.activeElement;
+      if (slug) enqSvc.value = slug;
+      fillPackages(pkg);
+      enqForm.classList.remove('hidden');
+      enqDone.classList.add('hidden');
+      enqErr.classList.add('hidden');
+      enq.classList.remove('hidden');
+      document.documentElement.style.overflow = 'hidden';
+      setTimeout(function () { document.getElementById('enq-name').focus(); }, 60);
+    };
+    var closeEnq = function () {
+      enq.classList.add('hidden');
+      document.documentElement.style.overflow = '';
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    };
+    enqSvc.addEventListener('change', function () { fillPackages(''); });
+    enq.querySelectorAll('[data-enq-close]').forEach(function (b) { b.addEventListener('click', closeEnq); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !enq.classList.contains('hidden')) closeEnq(); });
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-enquire]');
+      if (!b) return;
+      e.preventDefault();
+      openEnq(b.getAttribute('data-enquire'), b.getAttribute('data-package') || '');
+    });
+    enqForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      enqErr.classList.add('hidden');
+      var fail = function (m) { enqErr.textContent = m; enqErr.classList.remove('hidden'); };
+      if (!enqForm.checkValidity()) {
+        var bad = enqForm.querySelector(':invalid');
+        if (bad) bad.focus();
+        return fail(bad && bad.type === 'email' ? 'Please enter a valid email address.' : 'Please fill your name, email and phone number.');
+      }
+      var btn = enqForm.querySelector('[type="submit"]');
+      var label = btn.innerHTML;
+      btn.disabled = true; btn.textContent = 'Sending…';
+      var data = {};
+      new FormData(enqForm).forEach(function (v, k) { data[k] = v; });
+      api('lead/', data).then(function (res) {
+        btn.disabled = false; btn.innerHTML = label;
+        if (!res.ok) return fail(res.error || 'Please check the form and try again.');
+        enqForm.classList.add('hidden');
+        enqDone.classList.remove('hidden');
+        document.getElementById('enq-ref').textContent = res.ref;
+        var t = document.getElementById('enq-track');
+        t.href = t.href.split('?')[0] + '?ref=' + encodeURIComponent(res.ref) + '&email=' + encodeURIComponent(data.email);
+        var wa = document.getElementById('enq-wa');
+        if (wa) wa.href = 'https://wa.me/' + wa.getAttribute('data-wa') + '?text=' + encodeURIComponent('Hi Arun, I just sent an enquiry (' + res.ref + ') about ' + enqSvc.options[enqSvc.selectedIndex].getAttribute('data-title') + '.');
+        enqForm.reset();
+      });
+    });
+    window.DA.enquire = openEnq;
+  }
+
   /* ---------------- AI chat ---------------- */
   var chat = document.getElementById('ai-chat');
   var win = document.getElementById('ai-window');

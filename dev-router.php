@@ -7,8 +7,8 @@
 $root = __DIR__;
 $path = rawurldecode((string)parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
-if (preg_match('#^/(app|database|storage|node_modules|\.git|\.kiro)(/|$)#', $path) || preg_match('#/\.#', $path)
-    || preg_match('#^/(package(-lock)?\.json|tailwind\.config\.js|dev-router\.php|README\.md)$#', $path)
+if (preg_match('#^/(app|database|storage|vendor|node_modules|\.git|\.kiro)(/|$)#', $path) || preg_match('#/\.#', $path)
+    || preg_match('#^/(package(-lock)?\.json|tailwind\.config\.js|dev-router\.php|README\.md|composer\.(json|lock))$#', $path)
     || (str_starts_with($path, '/uploads/') && preg_match('#\.(php\d?|phtml|phar|html?|svg|js)$#i', $path))) {
     http_response_code(403);
     echo 'Forbidden';
